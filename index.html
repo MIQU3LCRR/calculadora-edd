@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Enteros</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+        .card {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 440px;
+        }
+        h1 {
+            font-size: 1.4rem;
+            margin: 0 0 0.4rem 0;
+            text-align: center;
+            color: #111827;
+        }
+        p.subtitulo {
+            font-size: 0.88rem;
+            color: #6b7280;
+            text-align: center;
+            margin: 0 0 1.5rem 0;
+        }
+        .campo {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            font-size: 0.92rem;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.65rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        .resultado-box {
+            margin-top: 1.25rem;
+            padding: 0.9rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            word-break: break-all;
+            display: none;
+        }
+        .resultado-ok {
+            display: block;
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+        .resultado-error {
+            display: block;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <h1>Calculadora de Enteros</h1>
+        <p class="subtitulo">Enteros de hasta 5 dígitos [-99999 ... 99999]</p>
+
+        <form id="calcForm" novalidate>
+            <div class="campo">
+                <label for="num1">Primer número entero</label>
+                <input type="number" id="num1" name="num1" min="-99999" max="99999" step="1" placeholder="Ej: 12345" required>
+            </div>
+
+            <div class="campo">
+                <label for="operacion">Operación</label>
+                <select id="operacion" name="operacion" required>
+                    <option value="suma">Suma (+)</option>
+                    <option value="resta">Resta (-)</option>
+                    <option value="multiplicacion">Multiplicación (×)</option>
+                    <option value="potencia">Potencia (^)</option>
+                </select>
+            </div>
+
+            <div class="campo">
+                <label for="num2">Segundo número entero</label>
+                <input type="number" id="num2" name="num2" min="-99999" max="99999" step="1" placeholder="Ej: -50" required>
+            </div>
+
+            <button type="submit">Calcular</button>
+        </form>
+
+        <div id="salida" class="resultado-box" role="status"></div>
+    </main>
+
+    <script>
+        const form = document.getElementById("calcForm");
+        const salida = document.getElementById("salida");
+
+        function mostrarMensaje(texto, esError) {
+            salida.textContent = texto;
+            salida.className = esError ? "resultado-box resultado-error" : "resultado-box resultado-ok";
+        }
+
+        function validarEnteroCincoDigitos(valorStr) {
+            const limpio = valorStr.trim();
+            if (!/^[+-]?\d+$/.test(limpio)) return null;
+            const numero = Number(limpio);
+            if (!Number.isInteger(numero) || numero < -99999 || numero > 99999) return null;
+            return numero;
+        }
+
+        form.addEventListener("submit", async (evento) => {
+            evento.preventDefault();
+
+            const n1 = validarEnteroCincoDigitos(document.getElementById("num1").value);
+            const n2 = validarEnteroCincoDigitos(document.getElementById("num2").value);
+            const operacion = document.getElementById("operacion").value;
+
+            if (n1 === null || n2 === null) {
+                mostrarMensaje("Error: Introduce solo números enteros entre -99999 y 99999.", true);
+                return;
+            }
+
+            try {
+                const url = `/calcular?num1=${encodeURIComponent(n1)}&num2=${encodeURIComponent(n2)}&operacion=${encodeURIComponent(operacion)}`;
+                const respuesta = await fetch(url);
+                const datos = await respuesta.json();
+
+                if (datos.ok) {
+                    mostrarMensaje(`Resultado: ${datos.resultado}`, false);
+                } else {
+                    mostrarMensaje(`Error: ${datos.error}`, true);
+                }
+            } catch (err) {
+                mostrarMensaje("Error: El servidor Java no está iniciado.", true);
+            }
+        });
+    </script>
+</body>
+</html>
